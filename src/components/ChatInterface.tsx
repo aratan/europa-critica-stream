@@ -5,125 +5,92 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWallet } from "@/hooks/useWallet";
 import { Send } from "lucide-react";
-import mqtt from 'mqtt';
-import CryptoJS from 'crypto-js';
+import { dbp2pService, ChatMessage } from "@/services/DBP2PService";
 
-interface Message {
-  id: string;
-  text: string;
-  sender: string;
-  timestamp: Date;
-}
+// Reutilizamos la interfaz ChatMessage del servicio DBP2P
 
 interface ChatInterfaceProps {
   channelId?: string;
   useYoutubeChat?: boolean;
 }
 
-// Encryption key (in a real app, this should be managed securely)
-const ENCRYPTION_KEY = 'europa-critica-secure-chat-key';
+// La clave de cifrado ahora se gestiona en el servicio DBP2P
 
 const ChatInterface = ({ channelId, useYoutubeChat = false }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messageText, setMessageText] = useState('');
   const { isConnected, formattedAddress } = useWallet();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const [mqttClient, setMqttClient] = useState<mqtt.MqttClient | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [mqttTopic, setMqttTopic] = useState('europa-critica/chat');
+  const [chatCollection, setChatCollection] = useState('chat_general');
 
-  // Encrypt message
-  const encryptMessage = (text: string) => {
-    return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
-  };
-
-  // Decrypt message
-  const decryptMessage = (encryptedText: string) => {
-    try {
-      const bytes = CryptoJS.AES.decrypt(encryptedText, ENCRYPTION_KEY);
-      return bytes.toString(CryptoJS.enc.Utf8);
-    } catch (error) {
-      console.error('Failed to decrypt message:', error);
-      return 'Encrypted message';
-    }
-  };
+  // Las funciones de cifrado y descifrado ahora están en el servicio DBP2P
 
   useEffect(() => {
-    // Connect to a free public MQTT broker
-    if (!mqttClient && !isConnecting && !useYoutubeChat) {
+    // Conectar a DBP2P y cargar mensajes
+    if (!isConnecting && !useYoutubeChat) {
       setIsConnecting(true);
-      
-      // Using the HiveMQ public broker - replace with your preferred free MQTT broker
-      const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {
-        clientId: `europa-critica-${Math.random().toString(16).substring(2, 10)}`,
-        clean: true,
-      });
-      
-      client.on('connect', () => {
-        console.log('Connected to MQTT broker');
-        setMqttClient(client);
-        
-        // Set channel-specific topic if channelId is provided
-        const topic = channelId 
-          ? `europa-critica/chat/${channelId}` 
-          : 'europa-critica/chat/general';
-        
-        setMqttTopic(topic);
-        
-        // Subscribe to the chat topic
-        client.subscribe(topic, (err) => {
-          if (err) {
-            console.error('Failed to subscribe to MQTT topic:', err);
-          } else {
-            console.log(`Subscribed to ${topic}`);
-            
-            // Add system message
-            const welcomeMessage: Message = {
-              id: Date.now().toString(),
-              text: 'Bienvenidos al chat de Europa Crítica',
-              sender: 'Sistema',
-              timestamp: new Date()
-            };
-            setMessages([welcomeMessage]);
-          }
-        });
-      });
-      
-      client.on('message', (topic, payload) => {
+
+      // Iniciar sesión en DBP2P (usando credenciales predeterminadas)
+      const initializeDBP2P = async () => {
         try {
-          const rawData = payload.toString();
-          const data = JSON.parse(rawData);
-          
-          // Decrypt the message
-          if (data.encrypted) {
-            data.text = decryptMessage(data.text);
+          // Iniciar sesión en DBP2P
+          const loginSuccess = await dbp2pService.login('admin', 'admin123');
+
+          if (loginSuccess) {
+            // Establecer la colección específica del canal si se proporciona un channelId
+            const collection = channelId
+              ? `chat_${channelId}`
+              : 'chat_general';
+
+            setChatCollection(collection);
+
+            // Cargar mensajes existentes
+            const existingMessages = await dbp2pService.getMessages(collection);
+
+            // Añadir mensaje de bienvenida si no hay mensajes
+            if (existingMessages.length === 0) {
+              const welcomeMessage: ChatMessage = {
+                id: Date.now().toString(),
+                text: 'Bienvenidos al chat de Europa Crítica',
+                sender: 'Sistema',
+                timestamp: new Date()
+              };
+
+              setMessages([welcomeMessage]);
+
+              // Guardar mensaje de bienvenida en la base de datos
+              await dbp2pService.saveMessage(collection, welcomeMessage);
+            } else {
+              setMessages(existingMessages);
+            }
+
+            // Conectar WebSocket para actualizaciones en tiempo real
+            dbp2pService.connectWebSocket();
+            dbp2pService.subscribeToCollection(collection);
+
+            // Registrar callback para nuevos mensajes
+            dbp2pService.onNewMessage((newMessage) => {
+              setMessages(prev => [...prev, newMessage]);
+            });
+          } else {
+            console.error('No se pudo iniciar sesión en DBP2P');
           }
-          
-          const newMessage: Message = {
-            id: data.id || Date.now().toString(),
-            text: data.text,
-            sender: data.sender,
-            timestamp: new Date(data.timestamp || Date.now())
-          };
-          
-          setMessages(prev => [...prev, newMessage]);
         } catch (error) {
-          console.error('Failed to process incoming message:', error);
-        }
-      });
-      
-      client.on('error', (err) => {
-        console.error('MQTT connection error:', err);
-        setIsConnecting(false);
-      });
-      
-      return () => {
-        if (client) {
-          client.end();
+          console.error('Error al inicializar DBP2P:', error);
+        } finally {
+          setIsConnecting(false);
         }
       };
+
+      initializeDBP2P();
+
+      // Limpiar al desmontar
+      return () => {
+        dbp2pService.closeConnection();
+      };
     }
-  }, [mqttClient, isConnecting, channelId, useYoutubeChat]);
+  }, [isConnecting, channelId, useYoutubeChat]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -135,31 +102,29 @@ const ChatInterface = ({ channelId, useYoutubeChat = false }: ChatInterfaceProps
     }
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!messageText.trim() || !isConnected || !mqttClient) return;
-    
-    // Encrypt the message text
-    const encryptedText = encryptMessage(messageText);
-    
-    const messageData = {
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !isConnected || !dbp2pService.isConnected()) return;
+
+    // Crear objeto de mensaje
+    const messageData: ChatMessage = {
       id: Date.now().toString(),
-      text: encryptedText,
+      text: messageText,
       sender: formattedAddress || 'Anonymous',
-      timestamp: new Date().toISOString(),
-      encrypted: true
+      timestamp: new Date(),
+      encrypted: false // Se cifrará en el servicio
     };
-    
-    // Publish the encrypted message to MQTT
-    mqttClient.publish(mqttTopic, JSON.stringify(messageData));
-    
-    // Also add to local state for immediate UI update (with decrypted version)
-    const newMessage: Message = {
+
+    // Guardar mensaje en DBP2P (se cifrará en el servicio)
+    await dbp2pService.saveMessage(chatCollection, messageData);
+
+    // Añadir a estado local para actualización inmediata de la UI
+    const newMessage: ChatMessage = {
       id: messageData.id,
-      text: messageText, // Use original text for local display
+      text: messageText, // Texto original para mostrar localmente
       sender: formattedAddress || 'Anonymous',
       timestamp: new Date()
     };
-    
+
     setMessages([...messages, newMessage]);
     setMessageText('');
   };
@@ -186,9 +151,9 @@ const ChatInterface = ({ channelId, useYoutubeChat = false }: ChatInterfaceProps
   return (
     <div className="border border-gray-200 rounded-lg flex flex-col h-[500px]">
       <div className="bg-europa-blue text-white py-2 px-4">
-        <h3 className="font-bold">Chat Comunitario (MQTT Encriptado)</h3>
+        <h3 className="font-bold">Chat Comunitario (DBP2P Encriptado)</h3>
       </div>
-      
+
       <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((message) => (
@@ -204,7 +169,7 @@ const ChatInterface = ({ channelId, useYoutubeChat = false }: ChatInterfaceProps
           ))}
         </div>
       </ScrollArea>
-      
+
       <div className="p-2 border-t border-gray-200">
         {isConnected ? (
           <div className="flex space-x-2">
@@ -213,12 +178,12 @@ const ChatInterface = ({ channelId, useYoutubeChat = false }: ChatInterfaceProps
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               onKeyDown={handleKeyDown}
-              disabled={!isConnected || !mqttClient}
+              disabled={!isConnected || !dbp2pService.isConnected()}
             />
-            <Button 
-              onClick={handleSendMessage} 
+            <Button
+              onClick={handleSendMessage}
               size="icon"
-              disabled={!messageText.trim() || !isConnected || !mqttClient}
+              disabled={!messageText.trim() || !isConnected || !dbp2pService.isConnected()}
               className="bg-europa-blue hover:bg-blue-800"
             >
               <Send size={16} />
