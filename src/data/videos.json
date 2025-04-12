@@ -1,0 +1,44 @@
+
+[
+  {
+    "id": "SvXYG-8RW2c",
+    "title": "Análisis cultural europeo",
+    "description": "Contenido sobre la identidad cultural de Europa",
+    "thumbnail": "https://img.youtube.com/vi/SvXYG-8RW2c/maxresdefault.jpg",
+    "channelId": "IAVIC",
+    "isPremium": false
+  },
+  {
+    "id": "Pt2KrBfQ9hw",
+    "title": "Análisis jurídico de actualidad",
+    "description": "Perspectiva legal sobre temas actuales",
+    "thumbnail": "https://img.youtube.com/vi/Pt2KrBfQ9hw/maxresdefault.jpg",
+    "channelId": "Un_Abogado_Contra_la_Demagogia",
+    "isPremium": false
+  },
+  {
+    "id": "MnH-05WyxRw",
+    "title": "Análisis político independiente",
+    "description": "Perspectiva independiente sobre política",
+    "thumbnail": "https://img.youtube.com/vi/MnH-05WyxRw/maxresdefault.jpg",
+    "channelId": "begonagerpe7757",
+    "isPremium": false
+  },
+  {
+    "id": "bekGp3huvT4",
+    "title": "Análisis de actualidad y pensamiento crítico",
+    "description": "Análisis crítico sobre temas actuales",
+    "thumbnail": "https://img.youtube.com/vi/bekGp3huvT4/maxresdefault.jpg",
+    "channelId": "Un_Abogado_Contra_la_Demagogia",
+    "isPremium": true,
+    "price": "0.05"
+  },
+  {
+    "id": "O4xf_B1xIxs",
+    "title": "Libertad y economía",
+    "description": "Análisis sobre economía y libertad individual",
+    "thumbnail": "https://img.youtube.com/vi/O4xf_B1xIxs/maxresdefault.jpg",
+    "channelId": "IdeasRadicales",
+    "isPremium": false
+  }
+]

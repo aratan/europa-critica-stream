@@ -5,9 +5,23 @@ import ChannelList from "@/components/ChannelList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { VideoCard } from "@/components/VideoCard";
+import channels from "@/data/channels.json";
+import videos from "@/data/videos.json";
 
 const Channels = () => {
   const [activeTab, setActiveTab] = useState("all");
+
+  // Filter videos for featured tab
+  const featuredVideos = videos.slice(0, 3);
+  
+  // Filter videos for recent tab
+  const recentVideos = [...videos].sort(() => 0.5 - Math.random()).slice(0, 3);
+  
+  // Filter videos for critical thinking tab
+  const criticalVideos = videos.filter(video => 
+    video.title.toLowerCase().includes("crítico") || 
+    video.description.toLowerCase().includes("crítico")
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-europa-light">
@@ -42,27 +56,16 @@ const Channels = () => {
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-europa-blue">Videos Destacados</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <VideoCard 
-                    channelId="IAVIC"
-                    videoId="SvXYG-8RW2c"
-                    title="Análisis cultural europeo"
-                    channelName="IAVIC"
-                    channelImage="https://yt3.googleusercontent.com/ytc/APkrFKY5uBJ0AuKmzEaHlhA_9TnHRaCFGDlBgCR08PnU=s176-c-k-c0x00ffffff-no-rj"
-                  />
-                  <VideoCard 
-                    channelId="Un_Abogado_Contra_la_Demagogia"
-                    videoId="Pt2KrBfQ9hw"
-                    title="Análisis jurídico de actualidad"
-                    channelName="Un Abogado Contra la Demagogia"
-                    channelImage="https://yt3.googleusercontent.com/ytc/AL5GRJWDiebjD3o7x7_ERRQIEzBQi9DUlsJx-7LBB6c=s176-c-k-c0x00ffffff-no-rj"
-                  />
-                  <VideoCard 
-                    channelId="begonagerpe7757"
-                    videoId="MnH-05WyxRw"
-                    title="Análisis político independiente"
-                    channelName="Begoña Gerpe"
-                    channelImage="https://yt3.googleusercontent.com/ytc/APkrFKbTOUXZqJNGiXv2tRLyEZHGH-v6u_qK2nuIqT0MuA=s176-c-k-c0x00ffffff-no-rj"
-                  />
+                  {featuredVideos.map(video => (
+                    <VideoCard 
+                      key={video.id}
+                      videoId={video.id}
+                      title={video.title}
+                      channelId={video.channelId}
+                      isPremium={video.isPremium}
+                      price={video.price}
+                    />
+                  ))}
                 </div>
               </div>
             </TabsContent>
@@ -71,27 +74,16 @@ const Channels = () => {
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-europa-blue">Últimos Videos</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <VideoCard 
-                    channelId="begonagerpe7757"
-                    videoId="MnH-05WyxRw"
-                    title="Análisis político actual"
-                    channelName="Begoña Gerpe"
-                    channelImage="https://yt3.googleusercontent.com/ytc/APkrFKbTOUXZqJNGiXv2tRLyEZHGH-v6u_qK2nuIqT0MuA=s176-c-k-c0x00ffffff-no-rj"
-                  />
-                  <VideoCard 
-                    channelId="Un_Abogado_Contra_la_Demagogia"
-                    videoId="Pt2KrBfQ9hw"
-                    title="Perspectiva legal sobre temas actuales"
-                    channelName="Un Abogado Contra la Demagogia"
-                    channelImage="https://yt3.googleusercontent.com/ytc/AL5GRJWDiebjD3o7x7_ERRQIEzBQi9DUlsJx-7LBB6c=s176-c-k-c0x00ffffff-no-rj"
-                  />
-                  <VideoCard 
-                    channelId="IdeasRadicales"
-                    videoId="O4xf_B1xIxs"
-                    title="Libertad y economía"
-                    channelName="Ideas Radicales"
-                    channelImage="https://yt3.googleusercontent.com/ytc/APkrFKZzSV9WZyZxP0aqRLFFqsyJQp1YfZKbV_ysLNUm=s176-c-k-c0x00ffffff-no-rj"
-                  />
+                  {recentVideos.map(video => (
+                    <VideoCard 
+                      key={video.id}
+                      videoId={video.id}
+                      title={video.title}
+                      channelId={video.channelId}
+                      isPremium={video.isPremium}
+                      price={video.price}
+                    />
+                  ))}
                 </div>
               </div>
             </TabsContent>
@@ -100,27 +92,16 @@ const Channels = () => {
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-europa-blue">Videos de Pensamiento Crítico</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <VideoCard 
-                    channelId="Un_Abogado_Contra_la_Demagogia"
-                    videoId="bekGp3huvT4"
-                    title="Análisis de actualidad y pensamiento crítico"
-                    channelName="Un Abogado Contra la Demagogia"
-                    channelImage="https://yt3.googleusercontent.com/ytc/AL5GRJWDiebjD3o7x7_ERRQIEzBQi9DUlsJx-7LBB6c=s176-c-k-c0x00ffffff-no-rj"
-                  />
-                  <VideoCard 
-                    channelId="IAVIC"
-                    videoId="SvXYG-8RW2c"
-                    title="Cultura y tradición europea"
-                    channelName="IAVIC"
-                    channelImage="https://yt3.googleusercontent.com/ytc/APkrFKY5uBJ0AuKmzEaHlhA_9TnHRaCFGDlBgCR08PnU=s176-c-k-c0x00ffffff-no-rj"
-                  />
-                  <VideoCard 
-                    channelId="begonagerpe7757"
-                    videoId="MnH-05WyxRw"
-                    title="Perspectiva independiente sobre política"
-                    channelName="Begoña Gerpe"
-                    channelImage="https://yt3.googleusercontent.com/ytc/APkrFKbTOUXZqJNGiXv2tRLyEZHGH-v6u_qK2nuIqT0MuA=s176-c-k-c0x00ffffff-no-rj"
-                  />
+                  {videos.map(video => (
+                    <VideoCard 
+                      key={video.id}
+                      videoId={video.id}
+                      title={video.title}
+                      channelId={video.channelId}
+                      isPremium={video.isPremium}
+                      price={video.price}
+                    />
+                  ))}
                 </div>
               </div>
             </TabsContent>

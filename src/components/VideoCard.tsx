@@ -4,14 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Lock, Euro } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
+import channels from "@/data/channels.json";
 
 interface VideoCardProps {
   videoId: string;
   title: string;
-  channelName: string;
-  channelImage: string;
+  description?: string;
   channelId: string;
   isPremium?: boolean;
   price?: string;
@@ -20,8 +20,7 @@ interface VideoCardProps {
 export const VideoCard = ({ 
   videoId, 
   title, 
-  channelName, 
-  channelImage, 
+  description,
   channelId,
   isPremium = false,
   price = "0.01"
@@ -29,6 +28,17 @@ export const VideoCard = ({
   const { isConnected, makePayment } = useWallet();
   const [hasAccess, setHasAccess] = useState(!isPremium);
   const [isDonating, setIsDonating] = useState(false);
+  const [channelInfo, setChannelInfo] = useState<any>(null);
+
+  useEffect(() => {
+    // Check if user already has access to this video
+    const hasStoredAccess = localStorage.getItem(`video_access_${videoId}`) === 'true';
+    setHasAccess(!isPremium || hasStoredAccess);
+    
+    // Find channel information
+    const channel = channels.find(ch => ch.id === channelId);
+    setChannelInfo(channel);
+  }, [videoId, isPremium, channelId]);
 
   const handlePayment = async () => {
     if (!isConnected) return;
@@ -57,7 +67,7 @@ export const VideoCard = ({
       if (success) {
         toast({
           title: "¡Gracias por tu donación!",
-          description: `Has donado 1 ETH a ${channelName}`,
+          description: `Has donado 1 ETH a ${channelInfo?.name || 'este canal'}`,
         });
       }
     } catch (error) {
@@ -71,6 +81,8 @@ export const VideoCard = ({
       setIsDonating(false);
     }
   };
+
+  if (!channelInfo) return null;
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300">
@@ -96,14 +108,14 @@ export const VideoCard = ({
       <CardContent className="p-4">
         <div className="flex space-x-3">
           <img 
-            src={channelImage} 
-            alt={channelName} 
+            src={channelInfo.thumbnail} 
+            alt={channelInfo.name} 
             className="w-10 h-10 rounded-full object-cover flex-shrink-0"
           />
           <div className="flex-1">
             <h3 className="font-bold line-clamp-2 text-europa-blue">{title}</h3>
             <Link to={`/channel/${channelId}`} className="text-sm text-gray-500 hover:text-europa-gold">
-              {channelName}
+              {channelInfo.name}
             </Link>
           </div>
         </div>
