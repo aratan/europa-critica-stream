@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWallet } from "@/hooks/useWallet";
 import { Send } from "lucide-react";
+import mqtt from 'mqtt';
+import CryptoJS from 'crypto-js';
 
 interface Message {
   id: string;
@@ -18,37 +20,110 @@ interface ChatInterfaceProps {
   useYoutubeChat?: boolean;
 }
 
+// Encryption key (in a real app, this should be managed securely)
+const ENCRYPTION_KEY = 'europa-critica-secure-chat-key';
+
 const ChatInterface = ({ channelId, useYoutubeChat = false }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const { isConnected, formattedAddress } = useWallet();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [mqttClient, setMqttClient] = useState<mqtt.MqttClient | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [mqttTopic, setMqttTopic] = useState('europa-critica/chat');
+
+  // Encrypt message
+  const encryptMessage = (text: string) => {
+    return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  };
+
+  // Decrypt message
+  const decryptMessage = (encryptedText: string) => {
+    try {
+      const bytes = CryptoJS.AES.decrypt(encryptedText, ENCRYPTION_KEY);
+      return bytes.toString(CryptoJS.enc.Utf8);
+    } catch (error) {
+      console.error('Failed to decrypt message:', error);
+      return 'Encrypted message';
+    }
+  };
 
   useEffect(() => {
-    // For demo: Add some initial messages
-    const initialMessages: Message[] = [
-      {
-        id: '1',
-        text: 'Bienvenidos al chat de Europa Crítica',
-        sender: 'Sistema',
-        timestamp: new Date(Date.now() - 3600000)
-      },
-      {
-        id: '2',
-        text: '¿Qué opináis del último video?',
-        sender: 'Usuario123',
-        timestamp: new Date(Date.now() - 1800000)
-      },
-      {
-        id: '3',
-        text: 'Muy interesante el análisis sobre la situación actual',
-        sender: 'EuropeoLibre',
-        timestamp: new Date(Date.now() - 900000)
-      }
-    ];
-    
-    setMessages(initialMessages);
-  }, []);
+    // Connect to a free public MQTT broker
+    if (!mqttClient && !isConnecting && !useYoutubeChat) {
+      setIsConnecting(true);
+      
+      // Using the HiveMQ public broker - replace with your preferred free MQTT broker
+      const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {
+        clientId: `europa-critica-${Math.random().toString(16).substring(2, 10)}`,
+        clean: true,
+      });
+      
+      client.on('connect', () => {
+        console.log('Connected to MQTT broker');
+        setMqttClient(client);
+        
+        // Set channel-specific topic if channelId is provided
+        const topic = channelId 
+          ? `europa-critica/chat/${channelId}` 
+          : 'europa-critica/chat/general';
+        
+        setMqttTopic(topic);
+        
+        // Subscribe to the chat topic
+        client.subscribe(topic, (err) => {
+          if (err) {
+            console.error('Failed to subscribe to MQTT topic:', err);
+          } else {
+            console.log(`Subscribed to ${topic}`);
+            
+            // Add system message
+            const welcomeMessage: Message = {
+              id: Date.now().toString(),
+              text: 'Bienvenidos al chat de Europa Crítica',
+              sender: 'Sistema',
+              timestamp: new Date()
+            };
+            setMessages([welcomeMessage]);
+          }
+        });
+      });
+      
+      client.on('message', (topic, payload) => {
+        try {
+          const rawData = payload.toString();
+          const data = JSON.parse(rawData);
+          
+          // Decrypt the message
+          if (data.encrypted) {
+            data.text = decryptMessage(data.text);
+          }
+          
+          const newMessage: Message = {
+            id: data.id || Date.now().toString(),
+            text: data.text,
+            sender: data.sender,
+            timestamp: new Date(data.timestamp || Date.now())
+          };
+          
+          setMessages(prev => [...prev, newMessage]);
+        } catch (error) {
+          console.error('Failed to process incoming message:', error);
+        }
+      });
+      
+      client.on('error', (err) => {
+        console.error('MQTT connection error:', err);
+        setIsConnecting(false);
+      });
+      
+      return () => {
+        if (client) {
+          client.end();
+        }
+      };
+    }
+  }, [mqttClient, isConnecting, channelId, useYoutubeChat]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -61,11 +136,26 @@ const ChatInterface = ({ channelId, useYoutubeChat = false }: ChatInterfaceProps
   }, [messages]);
 
   const handleSendMessage = () => {
-    if (!messageText.trim() || !isConnected) return;
+    if (!messageText.trim() || !isConnected || !mqttClient) return;
     
-    const newMessage: Message = {
+    // Encrypt the message text
+    const encryptedText = encryptMessage(messageText);
+    
+    const messageData = {
       id: Date.now().toString(),
-      text: messageText,
+      text: encryptedText,
+      sender: formattedAddress || 'Anonymous',
+      timestamp: new Date().toISOString(),
+      encrypted: true
+    };
+    
+    // Publish the encrypted message to MQTT
+    mqttClient.publish(mqttTopic, JSON.stringify(messageData));
+    
+    // Also add to local state for immediate UI update (with decrypted version)
+    const newMessage: Message = {
+      id: messageData.id,
+      text: messageText, // Use original text for local display
       sender: formattedAddress || 'Anonymous',
       timestamp: new Date()
     };
@@ -96,7 +186,7 @@ const ChatInterface = ({ channelId, useYoutubeChat = false }: ChatInterfaceProps
   return (
     <div className="border border-gray-200 rounded-lg flex flex-col h-[500px]">
       <div className="bg-europa-blue text-white py-2 px-4">
-        <h3 className="font-bold">Chat Comunitario</h3>
+        <h3 className="font-bold">Chat Comunitario (MQTT Encriptado)</h3>
       </div>
       
       <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
@@ -119,16 +209,16 @@ const ChatInterface = ({ channelId, useYoutubeChat = false }: ChatInterfaceProps
         {isConnected ? (
           <div className="flex space-x-2">
             <Input
-              placeholder="Escribe un mensaje..."
+              placeholder="Escribe un mensaje (se enviará encriptado)..."
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               onKeyDown={handleKeyDown}
-              disabled={!isConnected}
+              disabled={!isConnected || !mqttClient}
             />
             <Button 
               onClick={handleSendMessage} 
               size="icon"
-              disabled={!messageText.trim() || !isConnected}
+              disabled={!messageText.trim() || !isConnected || !mqttClient}
               className="bg-europa-blue hover:bg-blue-800"
             >
               <Send size={16} />
