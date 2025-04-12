@@ -29,6 +29,7 @@ const Channels = () => {
               <TabsTrigger value="all">Todos los Canales</TabsTrigger>
               <TabsTrigger value="featured">Destacados</TabsTrigger>
               <TabsTrigger value="recent">Recientes</TabsTrigger>
+              <TabsTrigger value="critical">Pensamiento Crítico</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all" className="space-y-8">
@@ -90,6 +91,35 @@ const Channels = () => {
                     title="Libertad y economía"
                     channelName="Ideas Radicales"
                     channelImage="https://yt3.googleusercontent.com/ytc/APkrFKZzSV9WZyZxP0aqRLFFqsyJQp1YfZKbV_ysLNUm=s176-c-k-c0x00ffffff-no-rj"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="critical" className="space-y-8">
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-europa-blue">Videos de Pensamiento Crítico</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <VideoCard 
+                    channelId="Un_Abogado_Contra_la_Demagogia"
+                    videoId="bekGp3huvT4"
+                    title="Análisis de actualidad y pensamiento crítico"
+                    channelName="Un Abogado Contra la Demagogia"
+                    channelImage="https://yt3.googleusercontent.com/ytc/AL5GRJWDiebjD3o7x7_ERRQIEzBQi9DUlsJx-7LBB6c=s176-c-k-c0x00ffffff-no-rj"
+                  />
+                  <VideoCard 
+                    channelId="IAVIC"
+                    videoId="SvXYG-8RW2c"
+                    title="Cultura y tradición europea"
+                    channelName="IAVIC"
+                    channelImage="https://yt3.googleusercontent.com/ytc/APkrFKY5uBJ0AuKmzEaHlhA_9TnHRaCFGDlBgCR08PnU=s176-c-k-c0x00ffffff-no-rj"
+                  />
+                  <VideoCard 
+                    channelId="begonagerpe7757"
+                    videoId="MnH-05WyxRw"
+                    title="Perspectiva independiente sobre política"
+                    channelName="Begoña Gerpe"
+                    channelImage="https://yt3.googleusercontent.com/ytc/APkrFKbTOUXZqJNGiXv2tRLyEZHGH-v6u_qK2nuIqT0MuA=s176-c-k-c0x00ffffff-no-rj"
                   />
                 </div>
               </div>

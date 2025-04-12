@@ -2,9 +2,10 @@
 import { useWallet } from "@/hooks/useWallet";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, Lock } from "lucide-react";
+import { Play, Lock, Euro } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { toast } from "@/components/ui/use-toast";
 
 interface VideoCardProps {
   videoId: string;
@@ -27,6 +28,7 @@ export const VideoCard = ({
 }: VideoCardProps) => {
   const { isConnected, makePayment } = useWallet();
   const [hasAccess, setHasAccess] = useState(!isPremium);
+  const [isDonating, setIsDonating] = useState(false);
 
   const handlePayment = async () => {
     if (!isConnected) return;
@@ -36,6 +38,37 @@ export const VideoCard = ({
       // Store access information in localStorage
       localStorage.setItem(`video_access_${videoId}`, 'true');
       setHasAccess(true);
+    }
+  };
+
+  const handleDonation = async () => {
+    if (!isConnected) {
+      toast({
+        title: "Wallet no conectada",
+        description: "Conecta tu wallet para donar al creador",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsDonating(true);
+    try {
+      const success = await makePayment("1");
+      if (success) {
+        toast({
+          title: "¡Gracias por tu donación!",
+          description: `Has donado 1 ETH a ${channelName}`,
+        });
+      }
+    } catch (error) {
+      console.error("Error en la donación:", error);
+      toast({
+        title: "Error en la donación",
+        description: "No se pudo completar la donación",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDonating(false);
     }
   };
 
@@ -75,15 +108,27 @@ export const VideoCard = ({
           </div>
         </div>
         
-        {isPremium && !hasAccess && (
+        <div className="mt-3 flex space-x-2">
+          {isPremium && !hasAccess && (
+            <Button 
+              onClick={handlePayment} 
+              disabled={!isConnected}
+              className="flex-1 bg-europa-gold hover:bg-yellow-600 text-white"
+            >
+              {isConnected ? `Pagar ${price} ETH` : 'Conecta tu wallet para pagar'}
+            </Button>
+          )}
+          
           <Button 
-            onClick={handlePayment} 
-            disabled={!isConnected}
-            className="mt-3 w-full bg-europa-gold hover:bg-yellow-600 text-white"
+            onClick={handleDonation} 
+            disabled={isDonating || !isConnected}
+            variant="outline"
+            className="flex-1 border-europa-gold text-europa-blue hover:bg-europa-gold hover:text-white"
           >
-            {isConnected ? `Pagar ${price} ETH` : 'Conecta tu wallet para pagar'}
+            <Euro className="mr-2 h-4 w-4" />
+            {isDonating ? 'Donando...' : 'Donar 1 ETH'}
           </Button>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
