@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WalletProvider } from "@/context/WalletContext";
 import Index from "./pages/Index";
+import Channels from "./pages/Channels";
 import NotFound from "./pages/NotFound";
 
 // For MetaMask integration
@@ -37,6 +38,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/channels" element={<Channels />} />
               {/* Additional routes would go here */}
               <Route path="*" element={<NotFound />} />
             </Routes>

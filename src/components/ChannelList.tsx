@@ -39,6 +39,20 @@ const channels: Channel[] = [
     thumbnail: "https://yt3.googleusercontent.com/ytc/APkrFKZupQbhTHtjn3ftXcOYxjFcle9Grs4Wg7ZhJIyW=s176-c-k-c0x00ffffff-no-rj",
     url: "https://www.youtube.com/@eltemplariomoderno"
   },
+  {
+    id: "Un_Abogado_Contra_la_Demagogia",
+    name: "Un Abogado Contra la Demagogia",
+    description: "Análisis jurídico y político de la actualidad desde una perspectiva crítica",
+    thumbnail: "https://yt3.googleusercontent.com/ytc/AL5GRJWDiebjD3o7x7_ERRQIEzBQi9DUlsJx-7LBB6c=s176-c-k-c0x00ffffff-no-rj",
+    url: "https://www.youtube.com/@Un_Abogado_Contra_la_Demagogia"
+  },
+  {
+    id: "begonagerpe7757",
+    name: "Begoña Gerpe",
+    description: "Análisis político independiente sobre la actualidad española y europea",
+    thumbnail: "https://yt3.googleusercontent.com/ytc/APkrFKbTOUXZqJNGiXv2tRLyEZHGH-v6u_qK2nuIqT0MuA=s176-c-k-c0x00ffffff-no-rj",
+    url: "https://www.youtube.com/@begonagerpe7757"
+  }
 ];
 
 interface ChannelListProps {
