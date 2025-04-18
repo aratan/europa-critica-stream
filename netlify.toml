@@ -4,12 +4,12 @@
 
 # Configuración para servir archivos estáticos correctamente
 [[headers]]
-  for = "*/assets/*"
+  for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
 # Redirección para SPA
 [[redirects]]
   from = "/*"
-  to = "./index.html"
+  to = "/index.html"
   status = 200

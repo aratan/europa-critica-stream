@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,14 +19,13 @@ const App = () => {
   useEffect(() => {
     const loadWeb3 = async () => {
       if (window.ethereum) {
-        const script = document.createElement("script");
-        script.src =
-          "https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js";
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js';
         script.async = true;
         document.body.appendChild(script);
       }
     };
-
+    
     loadWeb3();
   }, []);
 
@@ -35,7 +35,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <WalletProvider>
-          <BrowserRouter basename={import.meta.env.BASE_URL || "/"}>
+          <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/channels" element={<Channels />} />
